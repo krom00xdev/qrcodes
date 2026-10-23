@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Craft Studio - Enterprise QR Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js library for raw matrix calculation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="fixed inset-0 z-40 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div id="modal-content" class="glass-card rounded-2xl w-full max-w-xl p-6 shadow-2xl relative border border-slate-700/50">
+            <!-- Dynamic Modal Content -->
+        </div>
+    </div>
+
+    <!-- APP WRAPPER -->
+    <div id="app" class="h-full min-h-screen flex flex-col">
+
+        <!-- ==================== 1. LOGIN VIEW ==================== -->
+        <div id="view-login" class="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-slate-950 relative overflow-hidden">
+            <!-- Background Glow FX -->
+            <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/30 mb-4">
+                    <i data-lucide="qr-code" class="w-8 h-8 text-white"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold tracking-tight text-white">QR Craft Studio</h2>
+                <p class="mt-2 text-sm text-slate-400">Enterprise QR Code Management & Analytics Platform</p>
+            </div>
+
+            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+                <div class="glass-card py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-800">
+                    <form id="login-form" class="space-y-6" onsubmit="handleLogin(event)">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-slate-300">Username</label>
+                            <div class="mt-2 relative">
+                                <input id="username" name="username" type="text" required value="admin"
+                                    class="w-full rounded-xl bg-slate-900/90 border border-slate-700/80 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-slate-300">Password</label>
+                            <div class="mt-2 relative">
+                                <input id="password" name="password" type="password" required value="admin123"
+                                    class="w-full rounded-xl bg-slate-900/90 border border-slate-700/80 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> Demo Credentials Filled</span>
+                            <span class="text-slate-500">v2.4 Pro</span>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-600/25 transition-all transform active:scale-[0.98]">
+                            Sign In to Dashboard <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MAIN DASHBOARD LAYOUT ==================== -->
+        <div id="view-dashboard" class="hidden h-screen flex overflow-hidden bg-slate-950">
+
+            <!-- SIDEBAR -->
+            <aside id="sidebar" class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between transition-all duration-300 z-30">
+                <div>
+                    <!-- Brand Logo -->
+                    <div class="h-16 flex items-center px-6 border-b border-slate-800/80 gap-3">
+                        <div class="p-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
+                            <i data-lucide="qr-code" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-slate-100 text-base leading-none">QR Studio</h1>
+                            <span class="text-[10px] tracking-wider uppercase font-semibold text-blue-400">Enterprise</span>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="p-4 space-y-1.5">
+                        <button onclick="switchTab('overview')" id="nav-overview"
+                            class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                        </button>
+                        <button onclick="switchTab('clients')" id="nav-clients"
+                            class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60">
+                            <i data-lucide="users" class="w-5 h-5"></i> Clients (CST)
+                        </button>
+                        <button onclick="switchTab('studio')" id="nav-studio"
+                            class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60">
+                            <i data-lucide="wand-2" class="w-5 h-5"></i> QR Studio Generator
+                        </button>
+                        <button onclick="switchTab('qrs')" id="nav-qrs"
+                            class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60">
+                            <i data-lucide="qr-code" class="w-5 h-5"></i> All QR Codes
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- User Profile & Logout -->
+                <div class="p-4 border-t border-slate-800/80">
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-800/40 border border-slate-700/40">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-teal-400 flex items-center justify-center font-bold text-white text-xs">
+                                AD
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-slate-200 truncate">Administrator</p>
+                                <p class="text-[10px] text-slate-400 truncate">admin@qrstudio.io</p>
+                            </div>
+                        </div>
+                        <button onclick="handleLogout()" title="Logout" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 rounded-lg transition">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="flex-1 flex flex-col h-full min-w-0 overflow-y-auto bg-slate-950">
+                
+                <!-- TOP HEADER -->
+                <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 bg-slate-950/80 backdrop-blur-md z-20">
+                    <div class="flex items-center gap-4">
+                        <h2 id="page-title" class="text-lg font-bold text-white capitalize">Overview</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="switchTab('studio')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-xs shadow-lg shadow-blue-600/20 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> New QR Code
+                        </button>
+                    </div>
+                </header>
+
+                <!-- TAB CONTENT CONTAINER -->
+                <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+
+                    <!-- SECTION 1: OVERVIEW DASHBOARD -->
+                    <div id="tab-overview" class="tab-content space-y-6 hidden">
+                        <!-- Metric Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Clients</p>
+                                        <h3 id="stat-total-clients" class="text-3xl font-extrabold text-white mt-2">0</h3>
+                                    </div>
+                                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                                        <i data-lucide="users" class="w-6 h-6"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
+                                    <span class="text-emerald-400 font-semibold flex items-center"><i data-lucide="trending-up" class="w-3.5 h-3.5 mr-0.5"></i> Active</span> accounts registered
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total QRs Generated</p>
+                                        <h3 id="stat-total-qrs" class="text-3xl font-extrabold text-white mt-2">0</h3>
+                                    </div>
+                                    <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                                        <i data-lucide="qr-code" class="w-6 h-6"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
+                                    <span class="text-indigo-400 font-semibold">Dynamic</span> & Static codes
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active QRs</p>
+                                        <h3 id="stat-active-qrs" class="text-3xl font-extrabold text-emerald-400 mt-2">0</h3>
+                                    </div>
+                                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-xs text-slate-400">
+                                    Currently scanning live
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Scans (Simulated)</p>
+                                        <h3 id="stat-total-scans" class="text-3xl font-extrabold text-amber-400 mt-2">1,284</h3>
+                                    </div>
+                                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                                        <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-xs text-slate-400">
+                                    across all client links
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Action & Recent QRs Table -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800/80">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-white text-base">Recently Created QR Codes</h3>
+                                    <button onclick="switchTab('qrs')" class="text-xs font-medium text-blue-400 hover:text-blue-300">View All</button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs text-slate-300">
+                                        <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                            <tr>
+                                                <th class="p-3">Name</th>
+                                                <th class="p-3">Client</th>
+                                                <th class="p-3">Type</th>
+                                                <th class="p-3">Status</th>
+                                                <th class="p-3">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="overview-recent-table" class="divide-y divide-slate-800/60">
+                                            <!-- Dynamic Rows -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Platform Quick Guide -->
+                            <div class="glass-card rounded-2xl p-6 border border-slate-800/80 flex flex-col justify-between space-y-4">
+                                <div>
+                                    <h3 class="font-bold text-white text-base mb-2">Platform Quickstart</h3>
+                                    <p class="text-xs text-slate-400 mb-4">Follow these steps to deploy custom QR codes for your corporate clients:</p>
+                                    <ol class="space-y-3 text-xs text-slate-300">
+                                        <li class="flex gap-3 items-start">
+                                            <span class="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center flex-shrink-0 text-[10px]">1</span>
+                                            <span><strong>Add Client:</strong> Register Company, VAT ID, Project info in CST section.</span>
+                                        </li>
+                                        <li class="flex gap-3 items-start">
+                                            <span class="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center flex-shrink-0 text-[10px]">2</span>
+                                            <span><strong>Studio Styling:</strong> Choose colors, inner/outer eye accents & central logo.</span>
+                                        </li>
+                                        <li class="flex gap-3 items-start">
+                                            <span class="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center flex-shrink-0 text-[10px]">3</span>
+                                            <span><strong>Export & Deploy:</strong> Download high-res PNG or SVG for production.</span>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <button onclick="switchTab('clients')" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium text-xs border border-slate-700 transition">
+                                    Manage Clients Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: CUSTOMERS / CLIENTS (CST) -->
+                    <div id="tab-clients" class="tab-content space-y-6 hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            
+                            <!-- Add Client Form Card -->
+                            <div class="glass-card rounded-2xl p-6 border border-slate-800/80 h-fit">
+                                <h3 id="cst-form-title" class="font-bold text-white text-base mb-4 flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-5 h-5 text-blue-400"></i> Add New Client (CST)
+                                </h3>
+                                <form id="client-form" onsubmit="handleSaveClient(event)" class="space-y-4">
+                                    <input type="hidden" id="cst-id" value="">
+                                    
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Company Name *</label>
+                                        <input type="text" id="cst-company" required placeholder="e.g. Acme Corporation"
+                                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Project Name *</label>
+                                        <input type="text" id="cst-project" required placeholder="e.g. Summer Marketing Campaign"
+                                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Product / Service *</label>
+                                        <input type="text" id="cst-product" required placeholder="e.g. Smart Smartwatch V2"
+                                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">VAT ID / Tax Number *</label>
+                                        <input type="text" id="cst-vat" required placeholder="e.g. US987654321"
+                                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                    </div>
+
+                                    <div class="flex gap-2 pt-2">
+                                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-xl text-xs transition">
+                                            Save Client
+                                        </button>
+                                        <button type="button" onclick="resetClientForm()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 px-3 rounded-xl text-xs transition">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Clients List & Details view -->
+                            <div class="lg:col-span-2 space-y-6">
+                                <div class="glass-card rounded-2xl p-6 border border-slate-800/80">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="font-bold text-white text-base">Client Directory</h3>
+                                        <div class="w-48">
+                                            <input type="text" id="client-search" onkeyup="renderClientsTable()" placeholder="Search client..."
+                                                class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        </div>
+                                    </div>
+
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-xs text-slate-300">
+                                            <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                                <tr>
+                                                    <th class="p-3">Company</th>
+                                                    <th class="p-3">Project</th>
+                                                    <th class="p-3">Product</th>
+                                                    <th class="p-3">VAT ID</th>
+                                                    <th class="p-3 text-center">Assigned QRs</th>
+                                                    <th class="p-3 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="clients-table-body" class="divide-y divide-slate-800/60">
+                                                <!-- Dynamic Rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Client Associated QRs Panel -->
+                                <div id="client-detail-panel" class="glass-card rounded-2xl p-6 border border-slate-800/80 hidden">
+                                    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                                        <div>
+                                            <span class="text-[10px] uppercase font-bold text-blue-400 tracking-wider">Associated QR Codes</span>
+                                            <h4 id="detail-client-name" class="text-lg font-bold text-white">Client Name</h4>
+                                        </div>
+                                        <button onclick="closeClientDetail()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                                            <i data-lucide="x" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+
+                                    <div id="client-qrs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Dynamic QR cards for this client -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: QR GENERATOR STUDIO -->
+                    <div id="tab-studio" class="tab-content space-y-6 hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                            <!-- LEFT CONTROLS FORM (7 cols) -->
+                            <div class="lg:col-span-7 space-y-6">
+                                
+                                <!-- Core Settings -->
+                                <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+                                    <h3 class="font-bold text-white text-base flex items-center gap-2 border-b border-slate-800 pb-3">
+                                        <i data-lucide="sliders" class="w-5 h-5 text-blue-400"></i> QR Code Configuration
+                                    </h3>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">QR Code Name *</label>
+                                            <input type="text" id="qr-name" value="Summer Campaign QR" oninput="updateStudioQR()"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Assign to Client (CST) *</label>
+                                            <select id="qr-client-id" onchange="updateStudioQR()"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                                <!-- Dynamic client options -->
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Type</label>
+                                            <select id="qr-type" onchange="handleTypeChange()"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                                <option value="url">Basic URL</option>
+                                                <option value="pdf">PDF Link / Document</option>
+                                                <option value="vcard">vCard Contact</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Status</label>
+                                            <select id="qr-status" onchange="updateStudioQR()"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                                <option value="Active">Active</option>
+                                                <option value="Paused">Paused</option>
+                                                <option value="Archived">Archived</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Expiration Date (Optional)</label>
+                                            <input type="date" id="qr-expiration" onchange="updateStudioQR()"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        </div>
+                                    </div>
+
+                                    <!-- DYNAMIC TYPE INPUT FIELDS -->
+                                    <div id="type-fields-container" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-3">
+                                        
+                                        <!-- URL Input -->
+                                        <div id="type-field-url" class="type-field">
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Destination URL *</label>
+                                            <input type="url" id="qr-link" value="https://example.com/promo" oninput="updateStudioQR()" placeholder="https://..."
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        </div>
+
+                                        <!-- PDF Input -->
+                                        <div id="type-field-pdf" class="type-field hidden">
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">PDF File URL / Host Link *</label>
+                                            <input type="url" id="qr-pdf-url" value="https://example.com/catalog.pdf" oninput="updateStudioQR()" placeholder="https://domain.com/file.pdf"
+                                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        </div>
+
+                                        <!-- vCard Dynamic Fields -->
+                                        <div id="type-field-vcard" class="type-field hidden space-y-3">
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Full Name</label>
+                                                    <input type="text" id="vcard-name" value="John Doe" oninput="updateStudioQR()"
+                                                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Phone</label>
+                                                    <input type="text" id="vcard-phone" value="+1234567890" oninput="updateStudioQR()"
+                                                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Email</label>
+                                                    <input type="email" id="vcard-email" value="john@company.com" oninput="updateStudioQR()"
+                                                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Company</label>
+                                                    <input type="text" id="vcard-company" value="Acme Inc" oninput="updateStudioQR()"
+                                                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Auto-generated Short URL preview -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Auto-Generated Short URL</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" id="qr-short-url" readonly value="https://qr.craft/c/x9a8b7"
+                                                class="flex-1 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-xs text-blue-400 font-mono select-all">
+                                            <button onclick="copyShortUrl()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs flex items-center gap-1 transition">
+                                                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CUSTOMIZATION & COLOR PICKERS -->
+                                <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+                                    <h3 class="font-bold text-white text-base flex items-center gap-2 border-b border-slate-800 pb-3">
+                                        <i data-lucide="palette" class="w-5 h-5 text-indigo-400"></i> Visual Style & Colors
+                                    </h3>
+
+                                    <!-- Color Controls Grid -->
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Foreground Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" id="col-fg" value="#0f172a" onchange="updateStudioQR()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                                                <input type="text" id="hex-fg" value="#0f172a" onchange="syncColorFromHex('fg')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono uppercase">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" id="col-bg" value="#ffffff" onchange="updateStudioQR()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                                                <input type="text" id="hex-bg" value="#ffffff" onchange="syncColorFromHex('bg')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono uppercase">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Top-Left Eye</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" id="col-eye-tl" value="#2563eb" onchange="updateStudioQR()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                                                <input type="text" id="hex-eye-tl" value="#2563eb" onchange="syncColorFromHex('eye-tl')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono uppercase">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Top-Right Eye</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" id="col-eye-tr" value="#2563eb" onchange="updateStudioQR()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                                                <input type="text" id="hex-eye-tr" value="#2563eb" onchange="syncColorFromHex('eye-tr')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono uppercase">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Bottom-Left Eye</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" id="col-eye-bl" value="#2563eb" onchange="updateStudioQR()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                                                <input type="text" id="hex-eye-bl" value="#2563eb" onchange="syncColorFromHex('eye-bl')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono uppercase">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Quick Presets</label>
+                                            <button onclick="applyPresetColors('#0f172a', '#ffffff', '#2563eb')" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700">
+                                                Modern Blue
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Logo Upload Section -->
+                                    <div class="border-t border-slate-800 pt-4">
+                                        <label class="block text-xs font-medium text-slate-300 mb-2">Center Customer Logo</label>
+                                        <div class="flex items-center gap-4">
+                                            <div id="logo-preview-box" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden text-slate-500">
+                                                <i data-lucide="image" class="w-5 h-5"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <input type="file" id="logo-input" accept="image/*" onchange="handleLogoUpload(event)" class="hidden">
+                                                <div class="flex gap-2">
+                                                    <button type="button" onclick="document.getElementById('logo-input').click()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl border border-slate-700 transition">
+                                                        Upload Custom Logo
+                                                    </button>
+                                                    <button type="button" onclick="removeLogo()" id="btn-remove-logo" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-medium rounded-xl border border-rose-500/20 hidden">
+                                                        Remove Logo
+                                                    </button>
+                                                </div>
+                                                <p class="text-[10px] text-slate-400 mt-1">PNG, SVG or JPG (Square format recommended).</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT LIVE PREVIEW CANVAS & ACTIONS (5 cols) -->
+                            <div class="lg:col-span-5 space-y-6">
+                                <div class="glass-card rounded-2xl p-6 border border-slate-800/80 sticky top-24 text-center">
+                                    <h3 class="font-bold text-white text-base mb-4 flex items-center justify-center gap-2">
+                                        <i data-lucide="eye" class="w-5 h-5 text-emerald-400"></i> Live QR Preview
+                                    </h3>
+
+                                    <!-- Dynamic SVG QR Render Canvas Container -->
+                                    <div class="flex justify-center my-6">
+                                        <div id="qr-preview-wrapper" class="p-6 rounded-2xl bg-white shadow-2xl relative border border-slate-200 transition-all flex items-center justify-center">
+                                            <!-- Interactive SVG or Canvas generated here -->
+                                            <svg id="qr-svg-canvas" width="260" height="260" viewBox="0 0 260 260" class="max-w-full h-auto"></svg>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-center gap-3">
+                                        <button onclick="downloadQR('png')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-medium shadow-lg shadow-blue-600/20 transition">
+                                            <i data-lucide="download" class="w-4 h-4"></i> Download PNG
+                                        </button>
+                                        <button onclick="downloadQR('svg')" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 transition">
+                                            <i data-lucide="file-code" class="w-4 h-4"></i> Download SVG
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-6 pt-6 border-t border-slate-800">
+                                        <button id="btn-save-qr" onclick="saveCurrentQR()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-600/20 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+                                            <i data-lucide="save" class="w-4 h-4"></i> Save & Deploy QR Code
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: ALL GENERATED QRS LIST -->
+                    <div id="tab-qrs" class="tab-content space-y-6 hidden">
+                        <div class="glass-card rounded-2xl p-6 border border-slate-800/80">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 class="font-bold text-white text-base">QR Codes Directory</h3>
+                                    <p class="text-xs text-slate-400">Manage, edit status, or export existing dynamic QR codes.</p>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <select id="filter-status" onchange="renderQRsTable()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300">
+                                        <option value="all">All Statuses</option>
+                                        <option value="Active">Active Only</option>
+                                        <option value="Paused">Paused Only</option>
+                                        <option value="Archived">Archived Only</option>
+                                    </select>
+
+                                    <input type="text" id="qrs-search" onkeyup="renderQRsTable()" placeholder="Search QR or Link..."
+                                        class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs text-slate-300">
+                                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                        <tr>
+                                            <th class="p-3">QR Details</th>
+                                            <th class="p-3">Client (CST)</th>
+                                            <th class="p-3">Type</th>
+                                            <th class="p-3">Short URL</th>
+                                            <th class="p-3">Status</th>
+                                            <th class="p-3">Expires</th>
+                                            <th class="p-3 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="qrs-table-body" class="divide-y divide-slate-800/60">
+                                        <!-- Dynamic QRs List -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ==================== IN-MEMORY DATABASE STATE ====================
+        const state = {
+            clients: [
+                { id: "cst-101", company: "Acme International", project: "Global Launch", product: "Smart Router X", vat: "US987654321" },
+                { id: "cst-102", company: "Aura Luxury Retail", project: "VIP Membership", product: "Loyalty Card", vat: "EU44332211" },
+                { id: "cst-103", company: "TechPulse Media", project: "Podcast Promo", product: "Daily Digest", vat: "GB12398745" }
+            ],
+            qrs: [
+                {
+                    id: "qr-1",
+                    name: "Summer Launch Promo",
+                    clientId: "cst-101",
+                    type: "url",
+                    link: "https://acme.com/summer-launch",
+                    shortUrl: "https://qr.craft/c/acme-sum",
+                    status: "Active",
+                    expiration: "2026-12-31",
+                    colors: { fg: "#0f172a", bg: "#ffffff", eyeTL: "#2563eb", eyeTR: "#2563eb", eyeBL: "#2563eb" },
+                    logo: null,
+                    createdAt: "2026-10-15"
+                },
+                {
+                    id: "qr-2",
+                    name: "Aura VIP Menu PDF",
+                    clientId: "cst-102",
+                    type: "pdf",
+                    link: "https://aura.luxury/vip-catalog.pdf",
+                    shortUrl: "https://qr.craft/c/aura-vip",
+                    status: "Active",
+                    expiration: "",
+                    colors: { fg: "#1e1b4b", bg: "#ffffff", eyeTL: "#4f46e5", eyeTR: "#4f46e5", eyeBL: "#4f46e5" },
+                    logo: null,
+                    createdAt: "2026-10-18"
+                }
+            ],
+            studio: {
+                editingId: null,
+                name: "New QR Code",
+                clientId: "cst-101",
+                type: "url",
+                status: "Active",
+                expiration: "",
+                link: "https://example.com",
+                pdfUrl: "https://example.com/document.pdf",
+                vcard: { name: "John Doe", phone: "+1234567890", email: "john@example.com", company: "Acme Corp" },
+                colors: { fg: "#0f172a", bg: "#ffffff", eyeTL: "#2563eb", eyeTR: "#2563eb", eyeBL: "#2563eb" },
+                logo: null,
+                shortUrl: ""
+            }
+        };
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            generateShortUrlSlug();
+            populateClientDropdown();
+            renderClientsTable();
+            renderQRsTable();
+            renderOverviewStats();
+            updateStudioQR();
+        });
+
+        // ==================== AUTHENTICATION LOGIC ====================
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+
+            if(u && p) {
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                showToast("Welcome back, Administrator!", "success");
+                switchTab('overview');
+            } else {
+                showToast("Please enter username and password", "error");
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-login').classList.remove('hidden');
+            showToast("Logged out successfully", "info");
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white');
+                el.classList.add('text-slate-400');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            const activeNav = document.getElementById(`nav-${tabId}`);
+
+            if(activeTab) activeTab.classList.remove('hidden');
+            if(activeNav) {
+                activeNav.classList.add('bg-blue-600', 'text-white');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            document.getElementById('page-title').innerText = tabId === 'cst' ? 'Client Management' : tabId.replace('-', ' ');
+
+            if(tabId === 'overview') renderOverviewStats();
+            if(tabId === 'studio') updateStudioQR();
+            if(tabId === 'qrs') renderQRsTable();
+            if(tabId === 'clients') renderClientsTable();
+        }
+
+        // ==================== CLIENT (CST) MANAGEMENT ====================
+        function handleSaveClient(e) {
+            e.preventDefault();
+            const id = document.getElementById('cst-id').value;
+            const company = document.getElementById('cst-company').value.trim();
+            const project = document.getElementById('cst-project').value.trim();
+            const product = document.getElementById('cst-product').value.trim();
+            const vat = document.getElementById('cst-vat').value.trim();
+
+            if(id) {
+                // Update
+                const c = state.clients.find(item => item.id === id);
+                if(c) {
+                    c.company = company; c.project = project; c.product = product; c.vat = vat;
+                    showToast("Client updated successfully", "success");
+                }
+            } else {
+                // Create
+                const newClient = {
+                    id: "cst-" + Date.now().toString().slice(-4),
+                    company, project, product, vat
+                };
+                state.clients.push(newClient);
+                showToast("New client created!", "success");
+            }
+
+            resetClientForm();
+            populateClientDropdown();
+            renderClientsTable();
+            renderOverviewStats();
+        }
+
+        function resetClientForm() {
+            document.getElementById('cst-id').value = "";
+            document.getElementById('client-form').reset();
+            document.getElementById('cst-form-title').innerHTML = `<i data-lucide="user-plus" class="w-5 h-5 text-blue-400"></i> Add New Client (CST)`;
+            lucide.createIcons();
+        }
+
+        function editClient(id) {
+            const c = state.clients.find(item => item.id === id);
+            if(!c) return;
+            document.getElementById('cst-id').value = c.id;
+            document.getElementById('cst-company').value = c.company;
+            document.getElementById('cst-project').value = c.project;
+            document.getElementById('cst-product').value = c.product;
+            document.getElementById('cst-vat').value = c.vat;
+            document.getElementById('cst-form-title').innerHTML = `<i data-lucide="edit" class="w-5 h-5 text-amber-400"></i> Edit Client`;
+            lucide.createIcons();
+        }
+
+        function deleteClient(id) {
+            if(confirm("Are you sure? Associated QR codes will also be unassigned.")) {
+                state.clients = state.clients.filter(c => c.id !== id);
+                populateClientDropdown();
+                renderClientsTable();
+                renderOverviewStats();
+                showToast("Client deleted", "info");
+            }
+        }
+
+        function renderClientsTable() {
+            const tbody = document.getElementById('clients-table-body');
+            const search = document.getElementById('client-search').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = state.clients.filter(c => 
+                c.company.toLowerCase().includes(search) || 
+                c.vat.toLowerCase().includes(search) ||
+                c.project.toLowerCase().includes(search)
+            );
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No clients found</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const assignedCount = state.qrs.filter(q => q.clientId === c.id).length;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white">${escapeHtml(c.company)}</td>
+                    <td class="p-3 text-slate-300">${escapeHtml(c.project)}</td>
+                    <td class="p-3 text-slate-300">${escapeHtml(c.product)}</td>
+                    <td class="p-3 font-mono text-xs text-slate-400">${escapeHtml(c.vat)}</td>
+                    <td class="p-3 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            ${assignedCount} QRs
+                        </span>
+                    </td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="viewClientDetails('${c.id}')" title="View Associated QRs" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="editClient('${c.id}')" title="Edit Client" class="p-1.5 text-amber-400 hover:bg-amber-500/10 rounded-lg">
+                            <i data-lucide="edit" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteClient('${c.id}')" title="Delete Client" class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function viewClientDetails(clientId) {
+            const client = state.clients.find(c => c.id === clientId);
+            if(!client) return;
+
+            document.getElementById('detail-client-name').innerText = `${client.company} (${client.project})`;
+            const grid = document.getElementById('client-qrs-grid');
+            grid.innerHTML = '';
+
+            const associatedQRs = state.qrs.filter(q => q.clientId === clientId);
+
+            if(associatedQRs.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 text-center p-6 text-slate-500 bg-slate-900/50 rounded-xl">No QR codes assigned to this customer yet.</div>`;
+            } else {
+                associatedQRs.forEach(q => {
+                    const card = document.createElement('div');
+                    card.className = "p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4";
+                    card.innerHTML = `
+                        <div class="w-12 h-12 rounded-lg bg-white p-1 flex-shrink-0 flex items-center justify-center">
+                            <i data-lucide="qr-code" class="w-8 h-8 text-slate-900"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h5 class="font-bold text-white text-xs truncate">${escapeHtml(q.name)}</h5>
+                            <p class="text-[10px] text-blue-400 font-mono truncate">${q.shortUrl}</p>
+                            <span class="inline-block mt-1 text-[9px] px-2 py-0.5 rounded ${q.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-300'}">${q.status}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            document.getElementById('client-detail-panel').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeClientDetail() {
+            document.getElementById('client-detail-panel').classList.add('hidden');
+        }
+
+        function populateClientDropdown() {
+            const select = document.getElementById('qr-client-id');
+            select.innerHTML = '';
+            state.clients.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = `${c.company} (${c.project})`;
+                select.appendChild(opt);
+            });
+        }
+
+        // ==================== QR STUDIO GENERATOR LOGIC ====================
+        function handleTypeChange() {
+            const type = document.getElementById('qr-type').value;
+            document.querySelectorAll('.type-field').forEach(f => f.classList.add('hidden'));
+            
+            const target = document.getElementById(`type-field-${type}`);
+            if(target) target.classList.remove('hidden');
+
+            updateStudioQR();
+        }
+
+        function generateShortUrlSlug() {
+            const slug = Math.random().toString(36).substring(2, 8);
+            const short = `https://qr.craft/c/${slug}`;
+            document.getElementById('qr-short-url').value = short;
+            state.studio.shortUrl = short;
+        }
+
+        function syncColorFromHex(key) {
+            const hexVal = document.getElementById(`hex-${key}`).value;
+            const colorInput = document.getElementById(`col-${key}`);
+            if(/^#[0-9A-F]{6}$/i.test(hexVal)) {
+                colorInput.value = hexVal;
+                updateStudioQR();
+            }
+        }
+
+        function applyPresetColors(fg, bg, eye) {
+            document.getElementById('col-fg').value = fg; document.getElementById('hex-fg').value = fg;
+            document.getElementById('col-bg').value = bg; document.getElementById('hex-bg').value = bg;
+            document.getElementById('col-eye-tl').value = eye; document.getElementById('hex-eye-tl').value = eye;
+            document.getElementById('col-eye-tr').value = eye; document.getElementById('hex-eye-tr').value = eye;
+            document.getElementById('col-eye-bl').value = eye; document.getElementById('hex-eye-bl').value = eye;
+            updateStudioQR();
+        }
+
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    state.studio.logo = evt.target.result;
+                    document.getElementById('logo-preview-box').innerHTML = `<img src="${evt.target.result}" class="w-full h-full object-contain">`;
+                    document.getElementById('btn-remove-logo').classList.remove('hidden');
+                    updateStudioQR();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogo() {
+            state.studio.logo = null;
+            document.getElementById('logo-input').value = "";
+            document.getElementById('logo-preview-box').innerHTML = `<i data-lucide="image" class="w-5 h-5"></i>`;
+            document.getElementById('btn-remove-logo').classList.add('hidden');
+            lucide.createIcons();
+            updateStudioQR();
+        }
+
+        function getQRTargetPayload() {
+            const type = document.getElementById('qr-type').value;
+            if(type === 'url') {
+                return document.getElementById('qr-link').value || "https://example.com";
+            } else if(type === 'pdf') {
+                return document.getElementById('qr-pdf-url').value || "https://example.com/file.pdf";
+            } else if(type === 'vcard') {
+                const name = document.getElementById('vcard-name').value;
+                const phone = document.getElementById('vcard-phone').value;
+                const email = document.getElementById('vcard-email').value;
+                const company = document.getElementById('vcard-company').value;
+                return `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nFN:${name}\nORG:${company}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`;
+            }
+            return "https://example.com";
+        }
+
+        function updateStudioQR() {
+            // Sync hex inputs with color pickers
+            ['fg', 'bg', 'eye-tl', 'eye-tr', 'eye-bl'].forEach(k => {
+                const picker = document.getElementById(`col-${k}`);
+                const hex = document.getElementById(`hex-${k}`);
+                if(picker && hex) hex.value = picker.value;
+            });
+
+            const fg = document.getElementById('col-fg').value;
+            const bg = document.getElementById('col-bg').value;
+            const eyeTL = document.getElementById('col-eye-tl').value;
+            const eyeTR = document.getElementById('col-eye-tr').value;
+            const eyeBL = document.getElementById('col-eye-bl').value;
+
+            const payload = getQRTargetPayload();
+
+            // Render custom SVG QR Code
+            renderCustomSVGQR('qr-svg-canvas', payload, fg, bg, eyeTL, eyeTR, eyeBL, state.studio.logo);
+        }
+
+        // Custom SVG Matrix Renderer for Precise Eye Coloring & Logo Overlay
+        function renderCustomSVGQR(svgId, text, fgColor, bgColor, eyeTL, eyeTR, eyeBL, logoUrl) {
+            const svg = document.getElementById(svgId);
+            if(!svg) return;
+
+            // Generate raw QR matrix using QRCode.js helper element
+            const tempContainer = document.createElement('div');
+            const qr = new QRCode(tempContainer, {
+                text: text,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Extract modules from generated canvas
+            const canvas = tempContainer.querySelector('canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const count = qr._oQRCode.getModuleCount();
+            
+            const size = 260;
+            const cellSize = size / count;
+
+            svg.setAttribute('width', size);
+            svg.setAttribute('height', size);
+            svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+
+            let svgContent = `<rect width="${size}" height="${size}" fill="${bgColor}" rx="12" />`;
+
+            // Function to check if coordinate belongs to finder pattern eyes
+            function isEyeTL(r, c) { return r < 7 && c < 7; }
+            function isEyeTR(r, c) { return r < 7 && c >= count - 7; }
+            function isEyeBL(r, c) { return r >= count - 7 && c < 7; }
+
+            for (let row = 0; row < count; row++) {
+                for (let col = 0; col < count; col++) {
+                    if (qr._oQRCode.isDark(row, col)) {
+                        let fill = fgColor;
+
+                        if (isEyeTL(row, col)) fill = eyeTL;
+                        else if (isEyeTR(row, col)) fill = eyeTR;
+                        else if (isEyeBL(row, col)) fill = eyeBL;
+
+                        // Center logo clip exclusion area
+                        if (logoUrl && row >= count/2 - 3 && row <= count/2 + 3 && col >= count/2 - 3 && col <= count/2 + 3) {
+                            continue;
+                        }
+
+                        const x = col * cellSize;
+                        const y = row * cellSize;
+                        svgContent += `<rect x="${x}" y="${y}" width="${cellSize + 0.3}" height="${cellSize + 0.3}" fill="${fill}" />`;
+                    }
+                }
+            }
+
+            // Draw Central Logo if present
+            if (logoUrl) {
+                const logoSize = size * 0.22;
+                const logoPos = (size - logoSize) / 2;
+                
+                // White rounded backdrop for logo clarity
+                svgContent += `<rect x="${logoPos - 4}" y="${logoPos - 4}" width="${logoSize + 8}" height="${logoSize + 8}" fill="${bgColor}" rx="10" />`;
+                svgContent += `<image href="${logoUrl}" x="${logoPos}" y="${logoPos}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid slice" />`;
+            }
+
+            svg.innerHTML = svgContent;
+        }
+
+        function saveCurrentQR() {
+            const name = document.getElementById('qr-name').value.trim() || "Untitled QR";
+            const clientId = document.getElementById('qr-client-id').value;
+            const type = document.getElementById('qr-type').value;
+            const status = document.getElementById('qr-status').value;
+            const expiration = document.getElementById('qr-expiration').value;
+            const link = getQRTargetPayload();
+            const shortUrl = document.getElementById('qr-short-url').value;
+
+            const newQR = {
+                id: state.studio.editingId || ("qr-" + Date.now().toString().slice(-4)),
+                name,
+                clientId,
+                type,
+                link,
+                shortUrl,
+                status,
+                expiration,
+                colors: {
+                    fg: document.getElementById('col-fg').value,
+                    bg: document.getElementById('col-bg').value,
+                    eyeTL: document.getElementById('col-eye-tl').value,
+                    eyeTR: document.getElementById('col-eye-tr').value,
+                    eyeBL: document.getElementById('col-eye-bl').value
+                },
+                logo: state.studio.logo,
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+
+            if(state.studio.editingId) {
+                const idx = state.qrs.findIndex(q => q.id === state.studio.editingId);
+                if(idx !== -1) state.qrs[idx] = newQR;
+                showToast("QR Code updated successfully!", "success");
+            } else {
+                state.qrs.push(newQR);
+                showToast("New QR Code created & deployed!", "success");
+            }
+
+            // Reset studio form
+            state.studio.editingId = null;
+            document.getElementById('btn-save-qr').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Save & Deploy QR Code`;
+            generateShortUrlSlug();
+            renderQRsTable();
+            renderOverviewStats();
+            switchTab('qrs');
+        }
+
+        function downloadQR(format) {
+            const svg = document.getElementById('qr-svg-canvas');
+            const svgData = new XMLSerializer().serializeToString(svg);
+
+            if(format === 'svg') {
+                const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${document.getElementById('qr-name').value.slugify() || 'qrcode'}.svg`;
+                a.click();
+                showToast("SVG downloaded!", "success");
+            } else if(format === 'png') {
+                const img = new Image();
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 600;
+                    canvas.height = 600;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 600, 600);
+                    
+                    const pngUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = `${document.getElementById('qr-name').value.slugify() || 'qrcode'}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast("PNG downloaded in HD!", "success");
+                };
+                img.src = url;
+            }
+        }
+
+        // ==================== ALL QRS LIST TABLE ====================
+        function renderQRsTable() {
+            const tbody = document.getElementById('qrs-table-body');
+            const search = document.getElementById('qrs-search').value.toLowerCase();
+            const filterStatus = document.getElementById('filter-status').value;
+            tbody.innerHTML = '';
+
+            let filtered = state.qrs.filter(q => {
+                const matchSearch = q.name.toLowerCase().includes(search) || q.shortUrl.toLowerCase().includes(search) || q.link.toLowerCase().includes(search);
+                const matchStatus = filterStatus === 'all' || q.status === filterStatus;
+                return matchSearch && matchStatus;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No QR codes found</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(q => {
+                const client = state.clients.find(c => c.id === q.clientId) || { company: "Unassigned" };
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-white">${escapeHtml(q.name)}</div>
+                        <div class="text-[10px] text-slate-400 truncate max-w-xs">${escapeHtml(q.link)}</div>
+                    </td>
+                    <td class="p-3 text-slate-300">${escapeHtml(client.company)}</td>
+                    <td class="p-3">
+                        <span class="uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                            ${q.type}
+                        </span>
+                    </td>
+                    <td class="p-3 font-mono text-xs text-blue-400">
+                        <a href="${q.shortUrl}" target="_blank" class="hover:underline">${q.shortUrl}</a>
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusBadge(q.status)}">
+                            ${q.status}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-400 text-xs">${q.expiration || 'Never'}</td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="editQR('${q.id}')" title="Edit in Studio" class="p-1.5 text-amber-400 hover:bg-amber-500/10 rounded-lg">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteQR('${q.id}')" title="Delete" class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function editQR(id) {
+            const q = state.qrs.find(item => item.id === id);
+            if(!q) return;
+
+            state.studio.editingId = q.id;
+            document.getElementById('qr-name').value = q.name;
+            document.getElementById('qr-client-id').value = q.clientId;
+            document.getElementById('qr-type').value = q.type;
+            document.getElementById('qr-status').value = q.status;
+            document.getElementById('qr-expiration').value = q.expiration || "";
+            document.getElementById('qr-short-url').value = q.shortUrl;
+
+            handleTypeChange();
+
+            if(q.type === 'url') document.getElementById('qr-link').value = q.link;
+            if(q.type === 'pdf') document.getElementById('qr-pdf-url').value = q.link;
+
+            document.getElementById('col-fg').value = q.colors.fg;
+            document.getElementById('col-bg').value = q.colors.bg;
+            document.getElementById('col-eye-tl').value = q.colors.eyeTL;
+            document.getElementById('col-eye-tr').value = q.colors.eyeTR;
+            document.getElementById('col-eye-bl').value = q.colors.eyeBL;
+
+            if(q.logo) {
+                state.studio.logo = q.logo;
+                document.getElementById('logo-preview-box').innerHTML = `<img src="${q.logo}" class="w-full h-full object-contain">`;
+                document.getElementById('btn-remove-logo').classList.remove('hidden');
+            } else {
+                removeLogo();
+            }
+
+            document.getElementById('btn-save-qr').innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Update Changes`;
+            switchTab('studio');
+        }
+
+        function deleteQR(id) {
+            if(confirm("Delete this QR code? Link redirections will stop working.")) {
+                state.qrs = state.qrs.filter(q => q.id !== id);
+                renderQRsTable();
+                renderOverviewStats();
+                showToast("QR Code deleted", "info");
+            }
+        }
+
+        // ==================== OVERVIEW DASHBOARD STATS ====================
+        function renderOverviewStats() {
+            document.getElementById('stat-total-clients').innerText = state.clients.length;
+            document.getElementById('stat-total-qrs').innerText = state.qrs.length;
+            document.getElementById('stat-active-qrs').innerText = state.qrs.filter(q => q.status === 'Active').length;
+
+            const tbody = document.getElementById('overview-recent-table');
+            tbody.innerHTML = '';
+
+            const recent = [...state.qrs].reverse().slice(0, 4);
+            recent.forEach(q => {
+                const client = state.clients.find(c => c.id === q.clientId) || { company: "N/A" };
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white">${escapeHtml(q.name)}</td>
+                    <td class="p-3 text-slate-300">${escapeHtml(client.company)}</td>
+                    <td class="p-3 uppercase text-[10px] font-bold text-slate-400">${q.type}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 text-[10px] rounded-full ${getStatusBadge(q.status)}">${q.status}</span></td>
+                    <td class="p-3">
+                        <button onclick="editQR('${q.id}')" class="text-xs text-blue-400 hover:underline">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==================== HELPER UTILITIES ====================
+        function getStatusBadge(status) {
+            if(status === 'Active') return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            if(status === 'Paused') return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+            return 'bg-slate-700/50 text-slate-400 border border-slate-600/30';
+        }
+
+        function copyShortUrl() {
+            const input = document.getElementById('qr-short-url');
+            input.select();
+            document.execCommand('copy');
+            showToast("Short URL copied to clipboard!", "info");
+        }
+
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bg = "bg-slate-800 text-white border-slate-700";
+            if(type === 'success') bg = "bg-emerald-600 text-white border-emerald-500";
+            if(type === 'error') bg = "bg-rose-600 text-white border-rose-500";
+
+            toast.className = `px-4 py-3 rounded-xl shadow-2xl border text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-2 pointer-events-auto ${bg}`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2'); }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        String.prototype.slugify = function () {
+            return this.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        };
+    </script>
+</body>
+</html>
