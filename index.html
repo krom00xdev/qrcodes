@@ -569,11 +569,11 @@
                                         </div>
                                     </div>
 
-                                    <!-- Logo Upload Section -->
-                                    <div class="border-t border-slate-800 pt-4">
-                                        <label class="block text-xs font-medium text-slate-300 mb-2">Center Customer Logo</label>
+                                    <!-- Logo Upload & Scaling Section -->
+                                    <div class="border-t border-slate-800 pt-4 space-y-4">
+                                        <label class="block text-xs font-medium text-slate-300">Center Customer Logo & Sizing</label>
                                         <div class="flex items-center gap-4">
-                                            <div id="logo-preview-box" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden text-slate-500">
+                                            <div id="logo-preview-box" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden text-slate-500 flex-shrink-0">
                                                 <i data-lucide="image" class="w-5 h-5"></i>
                                             </div>
                                             <div class="flex-1">
@@ -588,6 +588,43 @@
                                                 </div>
                                                 <p class="text-[10px] text-slate-400 mt-1">PNG, SVG or JPG (Square format recommended).</p>
                                             </div>
+                                        </div>
+
+                                        <!-- Logo Size Slider -->
+                                        <div id="logo-slider-container" class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-2 opacity-50 pointer-events-none">
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="text-slate-300 font-medium">Logo Size Ratio</span>
+                                                <span id="logo-size-display" class="font-mono text-blue-400 font-bold">22%</span>
+                                            </div>
+                                            <input type="range" id="logo-size-range" min="10" max="30" step="1" value="22" oninput="handleLogoSizeChange(this.value)"
+                                                class="w-full accent-blue-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                                            <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                                                <span>10% (Small)</span>
+                                                <span>20% (Recommended)</span>
+                                                <span>30% (Max Safe)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Domain & Server Redirection Settings -->
+                                    <div class="border-t border-slate-800 pt-4 space-y-3">
+                                        <label class="block text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                                            <i data-lucide="server" class="w-3.5 h-3.5 text-blue-400"></i> Custom Short URL Domain / Server Base URL
+                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="url" id="custom-domain-url" value="https://qr.mycompany.com" oninput="handleDomainChange()" placeholder="https://yourdomain.com"
+                                                class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                                            <button onclick="resetDomain()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                                Reset
+                                            </button>
+                                        </div>
+                                        <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-[11px] text-slate-300 space-y-1">
+                                            <p class="font-semibold text-blue-400 flex items-center gap-1">
+                                                <i data-lucide="info" class="w-3.5 h-3.5"></i> Hosting on your own server:
+                                            </p>
+                                            <p class="text-slate-400">
+                                                Your server will receive requests at <code class="text-blue-300 font-mono">/c/[slug]</code> and query your database to perform a HTTP 301/302 redirect to the destination target URL.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -691,11 +728,12 @@
                     clientId: "cst-101",
                     type: "url",
                     link: "https://acme.com/summer-launch",
-                    shortUrl: "https://qr.craft/c/acme-sum",
+                    shortUrl: "https://qr.mycompany.com/c/acme-sum",
                     status: "Active",
                     expiration: "2026-12-31",
                     colors: { fg: "#0f172a", bg: "#ffffff", eyeTL: "#2563eb", eyeTR: "#2563eb", eyeBL: "#2563eb" },
                     logo: null,
+                    logoSizePercent: 22,
                     createdAt: "2026-10-15"
                 },
                 {
@@ -704,11 +742,12 @@
                     clientId: "cst-102",
                     type: "pdf",
                     link: "https://aura.luxury/vip-catalog.pdf",
-                    shortUrl: "https://qr.craft/c/aura-vip",
+                    shortUrl: "https://qr.mycompany.com/c/aura-vip",
                     status: "Active",
                     expiration: "",
                     colors: { fg: "#1e1b4b", bg: "#ffffff", eyeTL: "#4f46e5", eyeTR: "#4f46e5", eyeBL: "#4f46e5" },
                     logo: null,
+                    logoSizePercent: 22,
                     createdAt: "2026-10-18"
                 }
             ],
@@ -724,6 +763,7 @@
                 vcard: { name: "John Doe", phone: "+1234567890", email: "john@example.com", company: "Acme Corp" },
                 colors: { fg: "#0f172a", bg: "#ffffff", eyeTL: "#2563eb", eyeTR: "#2563eb", eyeBL: "#2563eb" },
                 logo: null,
+                logoSizePercent: 22,
                 shortUrl: ""
             }
         };
@@ -955,27 +995,30 @@
         }
 
         function generateShortUrlSlug() {
+            const domain = (document.getElementById('custom-domain-url')?.value || 'https://qr.mycompany.com').replace(/\/$/, '');
             const slug = Math.random().toString(36).substring(2, 8);
-            const short = `https://qr.craft/c/${slug}`;
+            const short = `${domain}/c/${slug}`;
             document.getElementById('qr-short-url').value = short;
             state.studio.shortUrl = short;
         }
 
-        function syncColorFromHex(key) {
-            const hexVal = document.getElementById(`hex-${key}`).value;
-            const colorInput = document.getElementById(`col-${key}`);
-            if(/^#[0-9A-F]{6}$/i.test(hexVal)) {
-                colorInput.value = hexVal;
-                updateStudioQR();
-            }
+        function handleDomainChange() {
+            const currentSlug = document.getElementById('qr-short-url').value.split('/c/')[1] || Math.random().toString(36).substring(2, 8);
+            const domain = (document.getElementById('custom-domain-url').value || 'https://qr.mycompany.com').replace(/\/$/, '');
+            const updatedShort = `${domain}/c/${currentSlug}`;
+            document.getElementById('qr-short-url').value = updatedShort;
+            state.studio.shortUrl = updatedShort;
         }
 
-        function applyPresetColors(fg, bg, eye) {
-            document.getElementById('col-fg').value = fg; document.getElementById('hex-fg').value = fg;
-            document.getElementById('col-bg').value = bg; document.getElementById('hex-bg').value = bg;
-            document.getElementById('col-eye-tl').value = eye; document.getElementById('hex-eye-tl').value = eye;
-            document.getElementById('col-eye-tr').value = eye; document.getElementById('hex-eye-tr').value = eye;
-            document.getElementById('col-eye-bl').value = eye; document.getElementById('hex-eye-bl').value = eye;
+        function resetDomain() {
+            document.getElementById('custom-domain-url').value = "https://qr.mycompany.com";
+            handleDomainChange();
+            showToast("Domain reset to default server URL", "info");
+        }
+
+        function handleLogoSizeChange(val) {
+            document.getElementById('logo-size-display').innerText = `${val}%`;
+            state.studio.logoSizePercent = parseInt(val, 10);
             updateStudioQR();
         }
 
@@ -987,6 +1030,11 @@
                     state.studio.logo = evt.target.result;
                     document.getElementById('logo-preview-box').innerHTML = `<img src="${evt.target.result}" class="w-full h-full object-contain">`;
                     document.getElementById('btn-remove-logo').classList.remove('hidden');
+                    
+                    // Enable slider control
+                    const sliderContainer = document.getElementById('logo-slider-container');
+                    sliderContainer.classList.remove('opacity-50', 'pointer-events-none');
+
                     updateStudioQR();
                 };
                 reader.readAsDataURL(file);
@@ -998,24 +1046,13 @@
             document.getElementById('logo-input').value = "";
             document.getElementById('logo-preview-box').innerHTML = `<i data-lucide="image" class="w-5 h-5"></i>`;
             document.getElementById('btn-remove-logo').classList.add('hidden');
+            
+            // Disable slider control
+            const sliderContainer = document.getElementById('logo-slider-container');
+            sliderContainer.classList.add('opacity-50', 'pointer-events-none');
+
             lucide.createIcons();
             updateStudioQR();
-        }
-
-        function getQRTargetPayload() {
-            const type = document.getElementById('qr-type').value;
-            if(type === 'url') {
-                return document.getElementById('qr-link').value || "https://example.com";
-            } else if(type === 'pdf') {
-                return document.getElementById('qr-pdf-url').value || "https://example.com/file.pdf";
-            } else if(type === 'vcard') {
-                const name = document.getElementById('vcard-name').value;
-                const phone = document.getElementById('vcard-phone').value;
-                const email = document.getElementById('vcard-email').value;
-                const company = document.getElementById('vcard-company').value;
-                return `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nFN:${name}\nORG:${company}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`;
-            }
-            return "https://example.com";
         }
 
         function updateStudioQR() {
@@ -1031,15 +1068,16 @@
             const eyeTL = document.getElementById('col-eye-tl').value;
             const eyeTR = document.getElementById('col-eye-tr').value;
             const eyeBL = document.getElementById('col-eye-bl').value;
+            const logoSizePercent = parseInt(document.getElementById('logo-size-range')?.value || '22', 10);
 
             const payload = getQRTargetPayload();
 
             // Render custom SVG QR Code
-            renderCustomSVGQR('qr-svg-canvas', payload, fg, bg, eyeTL, eyeTR, eyeBL, state.studio.logo);
+            renderCustomSVGQR('qr-svg-canvas', payload, fg, bg, eyeTL, eyeTR, eyeBL, state.studio.logo, logoSizePercent);
         }
 
-        // Custom SVG Matrix Renderer for Precise Eye Coloring & Logo Overlay
-        function renderCustomSVGQR(svgId, text, fgColor, bgColor, eyeTL, eyeTR, eyeBL, logoUrl) {
+        // Custom SVG Matrix Renderer for Precise Eye Coloring & Scalable Logo Overlay
+        function renderCustomSVGQR(svgId, text, fgColor, bgColor, eyeTL, eyeTR, eyeBL, logoUrl, logoSizePercent = 22) {
             const svg = document.getElementById(svgId);
             if(!svg) return;
 
@@ -1053,7 +1091,6 @@
             // Extract modules from generated canvas
             const canvas = tempContainer.querySelector('canvas');
             if(!canvas) return;
-            const ctx = canvas.getContext('2d');
             const count = qr._oQRCode.getModuleCount();
             
             const size = 260;
@@ -1070,6 +1107,9 @@
             function isEyeTR(r, c) { return r < 7 && c >= count - 7; }
             function isEyeBL(r, c) { return r >= count - 7 && c < 7; }
 
+            // Calculate modules clearance for logo based on slider ratio
+            const clearRadius = Math.ceil((count * (logoSizePercent / 100)) / 2) + 0.5;
+
             for (let row = 0; row < count; row++) {
                 for (let col = 0; col < count; col++) {
                     if (qr._oQRCode.isDark(row, col)) {
@@ -1079,8 +1119,10 @@
                         else if (isEyeTR(row, col)) fill = eyeTR;
                         else if (isEyeBL(row, col)) fill = eyeBL;
 
-                        // Center logo clip exclusion area
-                        if (logoUrl && row >= count/2 - 3 && row <= count/2 + 3 && col >= count/2 - 3 && col <= count/2 + 3) {
+                        // Center logo clip exclusion area based on scaled size
+                        if (logoUrl && 
+                            row >= (count/2 - clearRadius) && row <= (count/2 + clearRadius) && 
+                            col >= (count/2 - clearRadius) && col <= (count/2 + clearRadius)) {
                             continue;
                         }
 
@@ -1091,13 +1133,13 @@
                 }
             }
 
-            // Draw Central Logo if present
+            // Draw Central Logo if present with dynamic size
             if (logoUrl) {
-                const logoSize = size * 0.22;
+                const logoSize = size * (logoSizePercent / 100);
                 const logoPos = (size - logoSize) / 2;
                 
-                // White rounded backdrop for logo clarity
-                svgContent += `<rect x="${logoPos - 4}" y="${logoPos - 4}" width="${logoSize + 8}" height="${logoSize + 8}" fill="${bgColor}" rx="10" />`;
+                // White/Background rounded backdrop for clear separation from matrix
+                svgContent += `<rect x="${logoPos - 3}" y="${logoPos - 3}" width="${logoSize + 6}" height="${logoSize + 6}" fill="${bgColor}" rx="8" />`;
                 svgContent += `<image href="${logoUrl}" x="${logoPos}" y="${logoPos}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid slice" />`;
             }
 
@@ -1112,6 +1154,7 @@
             const expiration = document.getElementById('qr-expiration').value;
             const link = getQRTargetPayload();
             const shortUrl = document.getElementById('qr-short-url').value;
+            const logoSizePercent = parseInt(document.getElementById('logo-size-range')?.value || '22', 10);
 
             const newQR = {
                 id: state.studio.editingId || ("qr-" + Date.now().toString().slice(-4)),
@@ -1130,6 +1173,7 @@
                     eyeBL: document.getElementById('col-eye-bl').value
                 },
                 logo: state.studio.logo,
+                logoSizePercent,
                 createdAt: new Date().toISOString().split('T')[0]
             };
 
@@ -1149,98 +1193,6 @@
             renderQRsTable();
             renderOverviewStats();
             switchTab('qrs');
-        }
-
-        function downloadQR(format) {
-            const svg = document.getElementById('qr-svg-canvas');
-            const svgData = new XMLSerializer().serializeToString(svg);
-
-            if(format === 'svg') {
-                const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${document.getElementById('qr-name').value.slugify() || 'qrcode'}.svg`;
-                a.click();
-                showToast("SVG downloaded!", "success");
-            } else if(format === 'png') {
-                const img = new Image();
-                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(svgBlob);
-
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 600;
-                    canvas.height = 600;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 600, 600);
-                    
-                    const pngUrl = canvas.toDataURL('image/png');
-                    const a = document.createElement('a');
-                    a.href = pngUrl;
-                    a.download = `${document.getElementById('qr-name').value.slugify() || 'qrcode'}.png`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    showToast("PNG downloaded in HD!", "success");
-                };
-                img.src = url;
-            }
-        }
-
-        // ==================== ALL QRS LIST TABLE ====================
-        function renderQRsTable() {
-            const tbody = document.getElementById('qrs-table-body');
-            const search = document.getElementById('qrs-search').value.toLowerCase();
-            const filterStatus = document.getElementById('filter-status').value;
-            tbody.innerHTML = '';
-
-            let filtered = state.qrs.filter(q => {
-                const matchSearch = q.name.toLowerCase().includes(search) || q.shortUrl.toLowerCase().includes(search) || q.link.toLowerCase().includes(search);
-                const matchStatus = filterStatus === 'all' || q.status === filterStatus;
-                return matchSearch && matchStatus;
-            });
-
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No QR codes found</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(q => {
-                const client = state.clients.find(c => c.id === q.clientId) || { company: "Unassigned" };
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-900/40 transition";
-                tr.innerHTML = `
-                    <td class="p-3">
-                        <div class="font-bold text-white">${escapeHtml(q.name)}</div>
-                        <div class="text-[10px] text-slate-400 truncate max-w-xs">${escapeHtml(q.link)}</div>
-                    </td>
-                    <td class="p-3 text-slate-300">${escapeHtml(client.company)}</td>
-                    <td class="p-3">
-                        <span class="uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                            ${q.type}
-                        </span>
-                    </td>
-                    <td class="p-3 font-mono text-xs text-blue-400">
-                        <a href="${q.shortUrl}" target="_blank" class="hover:underline">${q.shortUrl}</a>
-                    </td>
-                    <td class="p-3">
-                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusBadge(q.status)}">
-                            ${q.status}
-                        </span>
-                    </td>
-                    <td class="p-3 text-slate-400 text-xs">${q.expiration || 'Never'}</td>
-                    <td class="p-3 text-right space-x-1">
-                        <button onclick="editQR('${q.id}')" title="Edit in Studio" class="p-1.5 text-amber-400 hover:bg-amber-500/10 rounded-lg">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="deleteQR('${q.id}')" title="Delete" class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons();
         }
 
         function editQR(id) {
@@ -1266,10 +1218,15 @@
             document.getElementById('col-eye-tr').value = q.colors.eyeTR;
             document.getElementById('col-eye-bl').value = q.colors.eyeBL;
 
+            const logoSize = q.logoSizePercent || 22;
+            document.getElementById('logo-size-range').value = logoSize;
+            document.getElementById('logo-size-display').innerText = `${logoSize}%`;
+
             if(q.logo) {
                 state.studio.logo = q.logo;
                 document.getElementById('logo-preview-box').innerHTML = `<img src="${q.logo}" class="w-full h-full object-contain">`;
                 document.getElementById('btn-remove-logo').classList.remove('hidden');
+                document.getElementById('logo-slider-container').classList.remove('opacity-50', 'pointer-events-none');
             } else {
                 removeLogo();
             }
